@@ -1,0 +1,5 @@
+{
+  "name": "Agita Capital - Sistema de Gerenciamento",
+  "description": "Um sistema CRUD robusto para gerenciar ouvintes, ganhadores, prêmios e colaboradores do programa Agita Capital, com integração conceitual ao Google Sheets.",
+  "requestFramePermissions": []
+}
