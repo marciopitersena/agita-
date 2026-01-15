@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { ModuleType, EntityData } from '../types';
 import { ICONS } from '../constants';
+import { getHeaders, getRows } from '../utils/tableHelpers';
 
 interface DataTableProps {
   module: ModuleType;
@@ -20,39 +21,7 @@ const DataTable: React.FC<DataTableProps> = ({ module, data, onEdit, onDelete })
     return searchString.includes(searchTerm.toLowerCase());
   });
 
-  const getHeaders = () => {
-    switch (module) {
-      case 'ouvintes':
-      case 'ganhadores':
-      case 'amigos':
-        return ['Nome', 'Telefone', 'Instagram', 'Idade'];
-      case 'premios':
-        return ['Prêmio', 'Valor', 'Patrocinador'];
-      case 'colaboradores':
-        return ['Nome', 'Função', 'Telefone'];
-      case 'patrocinadores':
-        return ['Razão Social', 'CNPJ', 'Valor'];
-      default:
-        return [];
-    }
-  };
-
-  const getRows = (item: any) => {
-    switch (module) {
-      case 'ouvintes':
-      case 'ganhadores':
-      case 'amigos':
-        return [item.nome, item.telefone, item.instagram, item.idade];
-      case 'premios':
-        return [item.nome, item.valor, item.patrocinador];
-      case 'colaboradores':
-        return [item.nome, item.funcao, item.telefone];
-      case 'patrocinadores':
-        return [item.razaoSocial, item.cnpj, item.valorPatrocinado];
-      default:
-        return [];
-    }
-  };
+  // Helper functions moved to utils/tableHelpers.ts
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -79,7 +48,7 @@ const DataTable: React.FC<DataTableProps> = ({ module, data, onEdit, onDelete })
         <table className="w-full text-left">
           <thead>
             <tr className="bg-slate-100/50 border-b border-slate-200">
-              {getHeaders().map((header) => (
+              {getHeaders(module).map((header) => (
                 <th key={header} className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider">
                   {header}
                 </th>
@@ -93,7 +62,7 @@ const DataTable: React.FC<DataTableProps> = ({ module, data, onEdit, onDelete })
             {filteredData.length > 0 ? (
               filteredData.map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50 transition-colors group">
-                  {getRows(item).map((val, idx) => (
+                  {getRows(module, item).map((val, idx) => (
                     <td key={idx} className="px-6 py-4 text-sm text-slate-700">
                       {val}
                     </td>
@@ -120,10 +89,10 @@ const DataTable: React.FC<DataTableProps> = ({ module, data, onEdit, onDelete })
               ))
             ) : (
               <tr>
-                <td colSpan={getHeaders().length + 1} className="px-6 py-12 text-center">
+                <td colSpan={getHeaders(module).length + 1} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <div className="bg-slate-100 p-4 rounded-full text-slate-400">
-                       <Search size={40} />
+                      <Search size={40} />
                     </div>
                     <p className="text-slate-500 font-medium">Nenhum registro encontrado</p>
                     <p className="text-slate-400 text-sm">Tente mudar sua pesquisa ou adicionar um novo item.</p>

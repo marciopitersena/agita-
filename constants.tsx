@@ -1,19 +1,20 @@
 
 import React from 'react';
-import { 
-  Users, 
-  Trophy, 
-  Gift, 
-  UserPlus, 
-  Briefcase, 
-  Handshake, 
+import {
+  Users,
+  Trophy,
+  Gift,
+  UserPlus,
+  Briefcase,
+  Handshake,
   Search,
   Plus,
   Trash2,
   Edit,
   Save,
+  Printer,
   X,
-  Printer
+  Download
 } from 'lucide-react';
 import { ModuleType } from './types';
 
@@ -34,4 +35,5 @@ export const ICONS = {
   Save: <Save size={20} />,
   Cancel: <X size={20} />,
   Print: <Printer size={20} />,
+  Download: <Download size={20} />,
 };

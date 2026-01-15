@@ -6,6 +6,8 @@ import DynamicForm from './components/DynamicForm';
 import { ModuleType, EntityData } from './types';
 import { storageService } from './services/storageService';
 import { ICONS, MODULES } from './constants';
+import { getHeaders, getRows } from './utils/tableHelpers';
+import * as XLSX from 'xlsx';
 
 const App: React.FC = () => {
   const [activeModule, setActiveModule] = useState<ModuleType>('ouvintes');
@@ -74,12 +76,37 @@ const App: React.FC = () => {
     window.print();
   };
 
+  const handleExport = () => {
+    // Get headers for the current module
+    const headers = getHeaders(activeModule);
+
+    // Format data rows matching the table structure
+    const rows = data.map(item => getRows(activeModule, item));
+
+    // Combine headers and rows
+    const wsData = [headers, ...rows];
+
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Create workbook and append worksheet
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, activeModule);
+
+    // Generate filename with timestamp
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `relatorio_${activeModule}_${date}.xlsx`;
+
+    // Trigger download
+    XLSX.writeFile(wb, filename);
+  };
+
   const currentModuleLabel = MODULES.find(m => m.id === activeModule)?.label || activeModule;
 
   return (
     <Layout activeModule={activeModule} setActiveModule={setActiveModule}>
       <div className="max-w-6xl mx-auto space-y-6 print:hidden">
-        
+
         {/* Module Header Actions */}
         {!showForm && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -95,6 +122,13 @@ const App: React.FC = () => {
                 Imprimir Relatório
               </button>
               <button
+                onClick={handleExport}
+                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition-all font-medium whitespace-nowrap"
+              >
+                {ICONS.Download}
+                Exportar Excel
+              </button>
+              <button
                 onClick={handleAddNew}
                 className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition-all font-medium whitespace-nowrap"
               >
@@ -107,8 +141,8 @@ const App: React.FC = () => {
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-             <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-             <p className="text-slate-500 font-medium animate-pulse">Carregando informações...</p>
+            <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-500 font-medium animate-pulse">Carregando informações...</p>
           </div>
         ) : showForm ? (
           <DynamicForm
@@ -130,14 +164,14 @@ const App: React.FC = () => {
         {!showForm && (
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mt-12 flex gap-4 items-start shadow-sm">
             <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
-               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-               </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
             <div>
               <h4 className="text-indigo-900 font-bold text-sm">Integração com Google Sheets</h4>
               <p className="text-indigo-700 text-xs mt-1 leading-relaxed">
-                Este sistema está configurado atualmente para armazenamento local (Cache do Navegador). 
+                Este sistema está configurado atualmente para armazenamento local (Cache do Navegador).
                 Para integrar com o seu Google Drive, basta conectar a URL do Google Apps Script no <code>storageService.ts</code>.
               </p>
             </div>

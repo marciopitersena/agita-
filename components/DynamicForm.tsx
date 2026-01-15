@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { ModuleType, EntityData } from '../types';
 import { ICONS, MODULES } from '../constants';
 import { storageService } from '../services/storageService';
+import { formatCPF, formatPhone } from '../utils/formatters';
+import { validateCPF, validatePhone } from '../utils/validators';
 
 interface DynamicFormProps {
   module: ModuleType;
@@ -21,7 +23,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ module, initialData, onSave, 
     } else {
       setFormData({ id: crypto.randomUUID() });
     }
-    
+
     const settings = storageService.getSettings();
     if (settings.logo) {
       setLogo(settings.logo);
@@ -29,12 +31,40 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ module, initialData, onSave, 
   }, [initialData, module]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+
+    // Applying masks
+    if (name === 'cpf') {
+      value = formatCPF(value);
+    } else if (name === 'telefone') {
+      value = formatPhone(value);
+    }
+
+    // Limit length to avoid overflow
+    if (name === 'cpf' && value.length > 14) return;
+    if (name === 'telefone' && value.length > 15) return;
+
     setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validations
+    if ((module === 'ouvintes' || module === 'ganhadores' || module === 'amigos') && formData.cpf) {
+      if (!validateCPF(formData.cpf)) {
+        alert("CPF inválido! Por favor verifique.");
+        return;
+      }
+    }
+
+    if (formData.telefone) {
+      if (!validatePhone(formData.telefone)) {
+        alert("Telefone inválido! Verifique o número digitado.");
+        return;
+      }
+    }
+
     onSave(formData);
   };
 
@@ -167,7 +197,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ module, initialData, onSave, 
           <div className="grid grid-cols-2 gap-y-6 gap-x-12 border-2 border-slate-200 p-10 rounded-2xl">
             {Object.entries(formData).map(([key, value]) => {
               if (key === 'id') return null;
-              
+
               // Formatação do label
               const labels: Record<string, string> = {
                 nome: 'Nome Completo',
@@ -204,7 +234,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ module, initialData, onSave, 
                 <span className="text-sm font-bold uppercase tracking-widest text-slate-500">Assinatura do Responsável</span>
               </div>
             </div>
-            
+
             {(module === 'ganhadores') && (
               <div className="flex justify-center">
                 <div className="w-2/3 border-t-2 border-slate-300 pt-4 text-center">
