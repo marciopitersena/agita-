@@ -18,10 +18,13 @@ const App: React.FC = () => {
   const [logo, setLogo] = useState<string | null>(null);
 
   useEffect(() => {
-    const settings = storageService.getSettings();
-    if (settings.logo) {
-      setLogo(settings.logo);
-    }
+    const fetchSettings = async () => {
+      const settings = await storageService.getSettings();
+      if (settings?.logo) {
+        setLogo(settings.logo);
+      }
+    };
+    fetchSettings();
   }, [showForm]); // Recarrega logo ao fechar form
 
   const loadData = useCallback(async () => {

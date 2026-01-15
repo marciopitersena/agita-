@@ -1,64 +1,75 @@
-
 import { ModuleType, EntityData } from '../types';
+import { db } from './firebase';
+import { ref, get, set, remove, update, child } from 'firebase/database';
 
 /**
- * Este serviço simula o banco de dados. 
- * Em uma implementação real com Google Sheets, estas funções chamariam 
- * a URL do Google Apps Script via fetch().
+ * Service to interact with Firebase Realtime Database
  */
-
-const STORAGE_KEY_PREFIX = 'agita_capital_';
-const SETTINGS_KEY = 'agita_capital_settings';
 
 export const storageService = {
   getAll: async <T extends EntityData>(module: ModuleType): Promise<T[]> => {
-    const data = localStorage.getItem(STORAGE_KEY_PREFIX + module);
-    return data ? JSON.parse(data) : [];
+    try {
+      const dbRef = ref(db);
+      const snapshot = await get(child(dbRef, module));
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        // Convert object to array
+        return Object.values(data);
+      } else {
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return [];
+    }
   },
 
   save: async (module: ModuleType, item: EntityData): Promise<void> => {
-    const items = await storageService.getAll(module);
-    const index = items.findIndex(i => i.id === item.id);
-    
-    if (index > -1) {
-      items[index] = item;
-    } else {
-      items.push(item);
+    try {
+      const itemRef = ref(db, `${module}/${item.id}`);
+      await set(itemRef, item);
+    } catch (error) {
+      console.error("Error saving data:", error);
+      throw error;
     }
-    
-    localStorage.setItem(STORAGE_KEY_PREFIX + module, JSON.stringify(items));
   },
 
   delete: async (module: ModuleType, id: string): Promise<void> => {
-    const items = await storageService.getAll(module);
-    const filtered = items.filter(i => i.id !== id);
-    localStorage.setItem(STORAGE_KEY_PREFIX + module, JSON.stringify(filtered));
+    try {
+      const itemRef = ref(db, `${module}/${id}`);
+      await remove(itemRef);
+    } catch (error) {
+      console.error("Error deleting data:", error);
+      throw error;
+    }
   },
 
   // Configurações Globais (Logo, etc)
-  getSettings: () => {
-    const settings = localStorage.getItem(SETTINGS_KEY);
-    return settings ? JSON.parse(settings) : { logo: null };
-  },
-
-  saveSettings: (settings: { logo: string | null }) => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  },
-
-  /**
-   * Sugestão de código para Google Apps Script (Backend)
-   */
-  getAppsScriptSnippet: () => {
-    return `
-      function doPost(e) {
-        var action = e.parameter.action;
-        var sheetName = e.parameter.sheet;
-        var ss = SpreadsheetApp.getActiveSpreadsheet();
-        var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
-        
-        // Lógica de CRUD simplificada aqui...
-        return ContentService.createTextOutput("Sucesso").setMimeType(ContentService.MimeType.TEXT);
+  getSettings: async () => {
+    try {
+      const dbRef = ref(db);
+      const snapshot = await get(child(dbRef, 'settings'));
+      if (snapshot.exists()) {
+        return snapshot.val();
+      } else {
+        return { logo: null };
       }
-    `;
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      return { logo: null };
+    }
+  },
+
+  saveSettings: async (settings: { logo: string | null }) => {
+    try {
+      const settingsRef = ref(db, 'settings');
+      await set(settingsRef, settings);
+    } catch (error) {
+      console.error("Error saving settings:", error);
+    }
+  },
+
+  getAppsScriptSnippet: () => {
+    return `// Firebase backend implementation in progress`;
   }
 };

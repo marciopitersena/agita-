@@ -24,10 +24,13 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ module, initialData, onSave, 
       setFormData({ id: crypto.randomUUID() });
     }
 
-    const settings = storageService.getSettings();
-    if (settings.logo) {
-      setLogo(settings.logo);
-    }
+    const fetchSettings = async () => {
+      const settings = await storageService.getSettings();
+      if (settings?.logo) {
+        setLogo(settings.logo);
+      }
+    };
+    fetchSettings();
   }, [initialData, module]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
